@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>背钻深度计算工具</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --border-radius: 6px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        
+        .header {
+            margin-bottom: 30px;
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--light-color);
+            position: relative;
+        }
+        
+        .header h1 {
+            color: var(--dark-color);
+            margin: 0;
+            font-size: 28px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .header h1:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: var(--primary-color);
+            border-radius: 3px;
+        }
+        
+        .input-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            background-color: #f9f9f9;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .input-section:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: var(--primary-color);
+        }
+        
+        .input-row {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .input-row label {
+            margin-right: 5px;
+            min-width: auto;
+            font-weight: 500;
+            color: var(--dark-color);
+            flex: 0 0 120px;
+            text-align: right;
+        }
+        
+        .input-row input {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            width: 140px;
+            transition: all 0.3s;
+            font-size: 15px;
+        }
+        
+        .input-group {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+            flex: 1;
+            min-width: 200px;
+            max-width: 300px;
+        }
+        
+        .input-row input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .target-input {
+            color: var(--accent-color);
+            font-weight: bold;
+            border: 1px solid #ffdddd !important;
+            background-color: #fffafa;
+        }
+        
+        .panel-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: var(--dark-color);
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+        
+        .panel-title:before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 16px;
+            background: var(--primary-color);
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+        
+        .data-panel {
+            width: 97.5%;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            background-color: white;
+            box-shadow: var(--box-shadow);
+            margin-bottom: 25px;
+            min-height: 140px;
+            position: relative;
+        }
+        
+        .data-row-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            padding: 15px;
+            background-color: #f8fafc;
+            border-radius: var(--border-radius);
+            border: 1px solid #e1e8ed;
+            transition: all 0.3s;
+        }
+        
+        .data-row-container:hover {
+            background-color: #edf7ff;
+            border-color: var(--primary-color);
+        }
+        
+        .data-column {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .data-column label {
+            font-size: 13px;
+            color: #5a6b82;
+            font-weight: 500;
+            display: block;
+        }
+        
+        .data-column input {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            width: 100%;
+            box-sizing: border-box;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .data-column input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .row-actions {
+            display: flex;
+            align-items: flex-end;
+            gap: 5px;
+            margin-left: 10px;
+            padding-bottom: 8px;
+        }
+        
+        .row-action-btn {
+            padding: 8px 15px;
+            font-size: 13px;
+            border-radius: 4px;
+            height: 40px;
+            box-sizing: border-box;
+            transition: all 0.2s;
+        }
+        
+        .button-group {
+            text-align: center;
+            margin: 25px 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 25px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: var(--box-shadow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .delete-btn {
+            background-color: white;
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+        }
+        
+        .delete-btn:hover {
+            background-color: #ffebee;
+        }
+        
+        #calculate-btn {
+            background-color: var(--success-color);
+            padding: 14px 35px;
+            font-size: 16px;
+            box-shadow: 0 6px 10px rgba(46, 204, 113, 0.3);
+        }
+        
+        #calculate-btn:hover {
+            background-color: #27ae60;
+        }
+        
+        .result-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .result-panel {
+            flex: 1;
+            min-height: 300px;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            overflow-y: auto;
+            white-space: pre-wrap;
+            background-color: #fcfdfe;
+            box-shadow: var(--box-shadow);
+            font-family: 'Consolas', 'Monaco', monospace;
+            line-height: 1.6;
+            font-size: 14px;
+            position: relative;
+        }
+        
+        .result-panel-title {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 5px 15px;
+            border-radius: var(--border-radius) 0 var(--border-radius) 0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .instructions {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            background-color: white;
+            box-shadow: var(--box-shadow);
+            min-height: 140px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+            color: var(--dark-color);
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+        
+        .instructions h3:before {
+            content: '📌';
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        .instructions pre {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-size: 14px;
+            color: #444;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .formula-highlight {
+            background-color: #fffacd;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+            color: #c00;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            color: #777;
+            font-size: 14px;
+        }
+        
+        .phase-indicator {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        
+        .phase-1 {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .phase-2 {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .input-row {
+                gap: 10px;
+            }
+            
+            .input-row input {
+                width: 100%;
+            }
+            
+            .input-group {
+                margin-right: 0;
+                max-width: 100%;
+                min-width: 100%;
+            }
+            
+            .result-container {
+                flex-direction: column;
+            }
+            
+            .data-row-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .data-column {
+                min-width: 100%;
+            }
+            
+            .row-actions {
+                align-self: center;
+                margin-top: 10px;
+                margin-left: 0;
+            }
+            
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>背钻深度计算工具</h1>
+        </div>
+
+        <div class="input-section">
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="model-name">型号:</label>
+                    <input type="text" id="model-name" placeholder="输入型号名称" value="输入型号名称">
+                </div>
+                
+                <div class="input-group">
+                    <label for="target-residual">目标残桩(μm):</label>
+                    <input type="number" id="target-residual" class="target-input" value="300">
+                </div>
+                
+                <div class="input-group">
+                    <label for="actual-inner-thickness">板内厚度(mm):</label>
+                    <input type="number" id="actual-inner-thickness" step="0.01" value="1.6">
+                </div>
+                
+                <div class="input-group">
+                    <label for="actual-edge-thickness">板边厚度(mm):</label>
+                    <input type="number" id="actual-edge-thickness" step="0.01" value="1.6">
+                </div>
+            </div>
+        </div>
+
+        <div class="data-panel">
+            <div class="panel-title">CS面数据<span class="phase-indicator phase-1">阶段1: 输入理论深度--▶阶段2：输入切片值</span></div>
+            <div id="cs-data-rows">
+                <div class="data-row-container">
+                    <div class="data-column">
+                        <label>不钻穿层TL:</label>
+                        <input type="text" class="cs-model" placeholder="不钻穿层" value="">
+                    </div>
+                    
+                    <div class="data-column">
+                        <label>理论深度(mm):</label>
+                        <input type="number" class="cs-theory-depth" step="0.001" placeholder="输入深度" value="">
+                    </div>
+                    
+                    <div class="data-column">
+                        <label>切片值(μm):</label>
+                        <input type="number" class="cs-slice-value" step="1" placeholder="输入切片值">
+                    </div>
+                    
+                    <div class="row-actions">
+                        <button class="row-action-btn delete-btn" onclick="deleteRow(this, 'cs')">删除</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="data-panel">
+            <div class="panel-title">SS面数据<span class="phase-indicator phase-1">阶段1: 输入理论深度--▶阶段2：输入切片值</span></div>
+            <div id="ss-data-rows">
+                <div class="data-row-container">
+                    <div class="data-column">
+                        <label>不钻穿层BL:</label>
+                        <input type="text" class="ss-model" placeholder="不钻穿层" value="">
+                    </div>
+                    
+                    <div class="data-column">
+                        <label>理论深度(mm):</label>
+                        <input type="number" class="ss-theory-depth" step="0.001" placeholder="输入深度" value="">
+                    </div>
+                    
+                    <div class="data-column">
+                        <label>切片值(μm):</label>
+                        <input type="number" class="ss-slice-value" step="1" placeholder="输入切片值">
+                    </div>
+                    
+                    <div class="row-actions">
+                        <button class="row-action-btn delete-btn" onclick="deleteRow(this, 'ss')">删除</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button id="calculate-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 9H15V15H9V9Z" stroke="currentColor" stroke-width="2"/>
+                    <path d="M3 17V7C3 4.79086 4.79086 3 7 3H17C19.2091 3 21 4.79086 21 7V17C21 19.2091 19.2091 21 17 21H7C4.79086 21 3 19.2091 3 17Z" stroke="currentColor" stroke-width="2"/>
+                    <path d="M3 12H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                计算
+            </button>
+        </div>
+
+        <div class="button-group">
+            <button id="add-cs-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                添加CS面行
+            </button>
+            <button id="add-ss-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                添加SS面行
+            </button>
+            <button id="add-both-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 4V20M4 12H20M8 8V16M16 8V16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                同时添加行
+            </button>
+            <button id="delete-cs-btn" class="delete-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 7H20M10 11V17M14 11V17M5 7L6 19C6 20.1046 6.89543 21 8 21H16C17.1046 21 18 20.1046 18 19L19 7M9 7V4C9 3.44772 9.44772 3 10 3H14C14.5523 3 15 3.44772 15 4V7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                删除CS面行
+            </button>
+            <button id="delete-ss-btn" class="delete-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 7H20M10 11V17M14 11V17M5 7L6 19C6 20.1046 6.89543 21 8 21H16C17.1046 21 18 20.1046 18 19L19 7M9 7V4C9 3.44772 9.44772 3 10 3H14C14.5523 3 15 3.44772 15 4V7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                删除SS面行
+            </button>
+            <button id="delete-both-btn" class="delete-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 7H20M10 11V17M14 11V17M5 7L6 19C6 20.1046 6.89543 21 8 21H16C17.1046 21 18 20.1046 18 19L19 7M9 7V4C9 3.44772 9.44772 3 10 3H14C14.5523 3 15 3.44772 15 4V7M3 7H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                同时删除行
+            </button>
+        </div>
+
+        <div class="result-container">
+            <div class="result-panel" id="cs-result">
+                <div class="result-panel-title">CS面计算结果</div>
+                CS面计算结果将显示在这里...
+            </div>
+            <div class="result-panel" id="ss-result">
+                <div class="result-panel-title">SS面计算结果</div>
+                SS面计算结果将显示在这里...
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h3>计算规则说明</h3>
+            <pre>
+1. 测试深度 = 理论深度 + 铝片厚度(0.15mm)
+2. 修正规则:
+   - 如果切片值 < 目标残桩: 修正深度 = 测试深度 - (目标残桩 - 切片值)/1000
+   - 如果切片值 > 目标残桩: 修正深度 = 测试深度 + (切片值 - 目标残桩)/1000
+3. 最终深度 = 修正深度 × (板内厚度 / 板边厚度)
+4. 所有长度单位: mm (除特别注明外)
+5. 目标残桩单位: μm (1mm = 1000μm)
+            </pre>
+        </div>
+        
+        <div class="footer">
+            © 2025 背钻深度计算工具   |   专业PCB制造解决方案    |    作者:段志恒     |     版本V:1.0
+        </div>
+    </div>
+
+    <script>
+        // 常量
+        const ALUMINUM_THICKNESS = 0.15; // 铝片厚度(mm)
+
+        // 添加行函数
+        function addDataRow(side = 'both') {
+            if (side === 'cs' || side === 'both') {
+                const csContainer = document.createElement('div');
+                csContainer.className = 'data-row-container';
+                
+                csContainer.innerHTML = `
+                    <div class="data-column">
+                        <label>不钻穿层TL:</label>
+                        <input type="text" class="cs-model" placeholder="不钻穿层型号">
+                    </div>
+                    
+                    <div class="data-column">
+                        <label>理论深度(mm):</label>
+                        <input type="number" class="cs-theory-depth" step="0.001" placeholder="输入深度">
+                    </div>
+                    
+                    <div class="data-column">
+                        <label>切片值(μm):</label>
+                        <input type="number" class="cs-slice-value" step="1" placeholder="输入切片值">
+                    </div>
+                    
+                    <div class="row-actions">
+                        <button class="row-action-btn delete-btn" onclick="deleteRow(this, 'cs')">删除</button>
+                    </div>
+                `;
+                
+                document.getElementById('cs-data-rows').appendChild(csContainer);
+            }
+            
+            if (side === 'ss' || side === 'both') {
+                const ssContainer = document.createElement('div');
+                ssContainer.className = 'data-row-container';
+                
+                ssContainer.innerHTML = `
+                    <div class="data-column">
+                        <label>不钻穿层BL:</label>
+                        <input type="text" class="ss-model" placeholder="不钻穿层型号">
+                    </div>
+                    
+                    <div class="data-column">
+                        <label>理论深度(mm):</label>
+                        <input type="number" class="ss-theory-depth" step="0.001" placeholder="输入深度">
+                    </div>
+                    
+                    <div class="data-column">
+                        <label>切片值(μm):</label>
+                        <input type="number" class="ss-slice-value" step="1" placeholder="输入切片值">
+                    </div>
+                    
+                    <div class="row-actions">
+                        <button class="row-action-btn delete-btn" onclick="deleteRow(this, 'ss')">删除</button>
+                    </div>
+                `;
+                
+                document.getElementById('ss-data-rows').appendChild(ssContainer);
+            }
+        }
+
+        // 删除行函数
+        function deleteRow(btn, side) {
+            const container = btn.closest('.data-row-container');
+            if (container) {
+                container.remove();
+            }
+        }
+
+        // 批量删除函数
+        function deleteAllRows(side) {
+            if (side === 'cs' || side === 'both') {
+                const csRows = document.querySelectorAll('#cs-data-rows .data-row-container');
+                if (csRows.length > 1) {
+                    csRows[csRows.length - 1].remove();
+                }
+            }
+            
+            if (side === 'ss' || side === 'both') {
+                const ssRows = document.querySelectorAll('#ss-data-rows .data-row-container');
+                if (ssRows.length > 1) {
+                    ssRows[ssRows.length - 1].remove();
+                }
+            }
+        }
+
+        // 计算函数
+        function calculate() {
+            try {
+                // 获取基本参数
+                const modelName = document.getElementById('model-name').value || '未命名型号';
+                const target = parseFloat(document.getElementById('target-residual').value);
+                const innerThickness = parseFloat(document.getElementById('actual-inner-thickness').value);
+                const edgeThickness = parseFloat(document.getElementById('actual-edge-thickness').value);
+                
+                if (isNaN(target) || isNaN(innerThickness) || isNaN(edgeThickness)) {
+                    throw new Error('请填写所有必填参数');
+                }
+                
+                if (edgeThickness === 0) {
+                    throw new Error('板边厚度不能为零');
+                }
+                
+                const thicknessRatio = innerThickness / edgeThickness;
+                
+                // 计算CS面结果
+                let csResults = '';
+                const csContainers = document.querySelectorAll('#cs-data-rows .data-row-container');
+                csContainers.forEach(container => {
+                    const model = container.querySelector('.cs-model').value || '未命名';
+                    const theoryDepth = parseFloat(container.querySelector('.cs-theory-depth').value);
+                    const sliceValue = parseFloat(container.querySelector('.cs-slice-value').value);
+                    
+                    if (isNaN(theoryDepth)) {
+                        return; // 跳过无效行
+                    }
+                    
+                    // 计算测试深度
+                    const testDepth = theoryDepth + ALUMINUM_THICKNESS;
+                    
+                    // 构建结果字符串
+                    csResults += `型号/TL层: ${modelName} - ${model}\n`;
+                    csResults += `理论深度: ${theoryDepth.toFixed(3)} mm\n`;
+                    csResults += `测试深度: ${testDepth.toFixed(3)} mm (理论深度 + 0.15mm铝片)\n`;
+                    
+                    // 如果有切片值，计算修正深度和最终深度
+                    if (!isNaN(sliceValue)) {
+                        // 计算修正深度
+                        let correctedDepth;
+                        if (sliceValue < target) {
+                            correctedDepth = testDepth - (target - sliceValue) / 1000;
+                        } else {
+                            correctedDepth = testDepth + (sliceValue - target) / 1000;
+                        }
+                        
+                        // 计算最终深度
+                        const finalDepth = correctedDepth * thicknessRatio;
+                        
+                        csResults += `切片值: ${sliceValue} μm (目标: ${target} μm)\n`;
+                        csResults += `修正深度: ${correctedDepth.toFixed(3)} mm\n`;
+                        csResults += `厚度比例: ${innerThickness.toFixed(2)} / ${edgeThickness.toFixed(2)} = ${thicknessRatio.toFixed(4)}\n`;
+                        csResults += `最终深度: ${finalDepth.toFixed(3)} mm\n`;
+                    } else {
+                        csResults += `切片值: 未输入 (请输入切片值进行第二阶段计算)\n`;
+                    }
+                    
+                    csResults += '────────────────────────\n';
+                });
+                
+                // 计算SS面结果
+                let ssResults = '';
+                const ssContainers = document.querySelectorAll('#ss-data-rows .data-row-container');
+                ssContainers.forEach(container => {
+                    const model = container.querySelector('.ss-model').value || '未命名';
+                    const theoryDepth = parseFloat(container.querySelector('.ss-theory-depth').value);
+                    const sliceValue = parseFloat(container.querySelector('.ss-slice-value').value);
+                    
+                    if (isNaN(theoryDepth)) {
+                        return; // 跳过无效行
+                    }
+                    
+                    // 计算测试深度
+                    const testDepth = theoryDepth + ALUMINUM_THICKNESS;
+                    
+                    // 构建结果字符串
+                    ssResults += `型号/BL层: ${modelName} - ${model}\n`;
+                    ssResults += `理论深度: ${theoryDepth.toFixed(3)} mm\n`;
+                    ssResults += `测试深度: ${testDepth.toFixed(3)} mm (理论深度 + 0.15mm铝片)\n`;
+                    
+                    // 如果有切片值，计算修正深度和最终深度
+                    if (!isNaN(sliceValue)) {
+                        // 计算修正深度
+                        let correctedDepth;
+                        if (sliceValue < target) {
+                            correctedDepth = testDepth - (target - sliceValue) / 1000;
+                        } else {
+                            correctedDepth = testDepth + (sliceValue - target) / 1000;
+                        }
+                        
+                        // 计算最终深度
+                        const finalDepth = correctedDepth * thicknessRatio;
+                        
+                        ssResults += `切片值: ${sliceValue} μm (目标: ${target} μm)\n`;
+                        ssResults += `修正深度: ${correctedDepth.toFixed(3)} mm\n`;
+                        ssResults += `厚度比例: ${innerThickness.toFixed(2)} / ${edgeThickness.toFixed(2)} = ${thicknessRatio.toFixed(4)}\n`;
+                        ssResults += `最终深度: ${finalDepth.toFixed(3)} mm\n`;
+                    } else {
+                        ssResults += `切片值: 未输入 (请输入切片值进行第二阶段计算)\n`;
+                    }
+                    
+                    ssResults += '────────────────────────\n';
+                });
+                
+                // 显示结果
+                document.getElementById('cs-result').textContent = csResults || '无CS面计算结果';
+                document.getElementById('ss-result').textContent = ssResults || '无SS面计算结果';
+                
+            } catch (error) {
+                alert('计算错误: ' + error.message);
+            }
+        }
+
+        // 事件监听
+        document.getElementById('add-cs-btn').addEventListener('click', () => addDataRow('cs'));
+        document.getElementById('add-ss-btn').addEventListener('click', () => addDataRow('ss'));
+        document.getElementById('add-both-btn').addEventListener('click', () => addDataRow('both'));
+        document.getElementById('delete-cs-btn').addEventListener('click', () => deleteAllRows('cs'));
+        document.getElementById('delete-ss-btn').addEventListener('click', () => deleteAllRows('ss'));
+        document.getElementById('delete-both-btn').addEventListener('click', () => deleteAllRows('both'));
+        document.getElementById('calculate-btn').addEventListener('click', calculate);
+        
+        // 初始化计算
+        window.addEventListener('DOMContentLoaded', () => {
+            calculate();
+        });
+    </script>
+</body>
+</html>
